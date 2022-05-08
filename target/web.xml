@@ -1,0 +1,1249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Password Management Servlets (PWM)
+  ~ http://code.google.com/p/pwm/
+  ~
+  ~ Copyright (c) 2006-2009 Novell, Inc.
+  ~ Copyright (c) 2009-2012 The PWM Project
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation; either version 2 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software
+  ~ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  -->
+
+<web-app id="PWM"
+         version="2.5"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         metadata-complete="true">
+    <display-name>PWM Password Management</display-name>
+    <distributable/>
+    <description>Password Management Servlet</description>
+    <context-param>
+        <description>Explicit location of PwmConfiguration.xml file. Without a value, PWM will look for the
+            file inside the servlet's WEB-INF directory.
+        </description>
+        <param-name>pwmConfigPath</param-name>
+        <param-value>PwmConfiguration.xml</param-value>
+    </context-param>
+    <context-param>
+        <description>Reload configuration on PwmConfiguration.xml modification.</description>
+        <param-name>configChange-reload</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+    <servlet>
+        <servlet-name>Jersey REST Service</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerRequestFilters</param-name>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>password.pwm.ws.server.rest</param-value>
+        </init-param>
+        <init-param>
+            <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Jersey REST Service</servlet-name>
+        <url-pattern>/public/rest/*</url-pattern>
+    </servlet-mapping>
+    <!-- uncomment and set parameters for CAS integration
+    <filter>
+        <filter-name>CAS Validation Filter</filter-name>
+        <filter-class>org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter</filter-class>
+        <init-param>
+            <param-name>casServerUrlPrefix</param-name>
+            <param-value>https://cas.localdomain.local:8443/cas/</param-value>
+        </init-param>
+        <init-param>
+            <param-name>serverName</param-name>
+            <param-value>https://pwm.localdomain.local:8443</param-value>
+        </init-param>
+        <init-param>
+            <param-name>proxyCallbackUrl</param-name>
+            <param-value>https://pwm.localdomain.local:8443/pwm/proxyCallback</param-value>
+        </init-param>
+        <init-param>
+            <param-name>proxyReceptorUrl</param-name>
+            <param-value>/proxyCallback</param-value>
+        </init-param>
+    </filter>
+    <filter>
+        <filter-name>CAS Authentication Filter</filter-name>
+        <filter-class>org.jasig.cas.client.authentication.AuthenticationFilter</filter-class>
+        <init-param>
+            <param-name>casServerLoginUrl</param-name>
+            <param-value>https://cas.localdomain.local:8443/cas/login</param-value>
+        </init-param>
+        <init-param>
+            <param-name>serverName</param-name>
+            <param-value>https://pwm.localdomain.local:8443</param-value>
+        </init-param>
+        <init-param>
+            <param-name>renew</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <init-param>
+            <param-name>gateway</param-name>
+            <param-value>false</param-value>
+        </init-param>
+    </filter>
+    <filter>
+        <filter-name>CAS Single Sign Out Filter</filter-name>
+        <filter-class>org.jasig.cas.client.session.SingleSignOutFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CAS Single Sign Out Filter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <listener>
+        <listener-class>org.jasig.cas.client.session.SingleSignOutHttpSessionListener</listener-class>
+    </listener>
+    <filter-mapping>
+        <filter-name>CAS Validation Filter</filter-name>
+        <url-pattern>/private/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS Authentication Filter</filter-name>
+        <url-pattern>/private/*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CAS Validation Filter</filter-name>
+        <url-pattern>/proxyCallback</url-pattern>
+    </filter-mapping>
+    -->
+    <filter>
+        <filter-name>ApplicationModeFilter</filter-name>
+        <filter-class>password.pwm.ApplicationModeFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>GZIPFilter</filter-name>
+        <filter-class>password.pwm.GZIPFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>SessionFilter</filter-name>
+        <filter-class>password.pwm.SessionFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>CaptchaFilter</filter-name>
+        <filter-class>password.pwm.CaptchaFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>AuthenticationFilter</filter-name>
+        <filter-class>password.pwm.AuthenticationFilter</filter-class>
+    </filter>
+    <filter>
+        <filter-name>AuthorizationFilter</filter-name>
+        <filter-class>password.pwm.AuthorizationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ApplicationModeFilter</filter-name>
+        <url-pattern>*</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>GZIPFilter</filter-name>
+        <url-pattern>/public/NewUser</url-pattern>
+        <url-pattern>/public/ActivateUser</url-pattern>
+        <url-pattern>/public/ForgottenPassword</url-pattern>
+        <url-pattern>/public/ForgottenUsername</url-pattern>
+        <url-pattern>/public/CommandServlet</url-pattern>
+        <url-pattern>/public/Logout</url-pattern>
+        <url-pattern>/private/*</url-pattern>
+        <url-pattern>/config/*</url-pattern>
+        <url-pattern>/</url-pattern>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>SessionFilter</filter-name>
+        <url-pattern>/public/NewUser</url-pattern>
+        <url-pattern>/public/ActivateUser</url-pattern>
+        <url-pattern>/public/ForgottenPassword</url-pattern>
+        <url-pattern>/public/ForgottenUsername</url-pattern>
+        <url-pattern>/public/CommandServlet</url-pattern>
+        <url-pattern>/public/Logout</url-pattern>
+        <url-pattern>/private/*</url-pattern>
+        <url-pattern>/config/*</url-pattern>
+        <url-pattern>/</url-pattern>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>CaptchaFilter</filter-name>
+        <url-pattern>/public/NewUser</url-pattern>
+        <url-pattern>/public/ActivateUser</url-pattern>
+        <url-pattern>/public/ForgottenPassword</url-pattern>
+        <url-pattern>/public/ForgottenUsername</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>AuthenticationFilter</filter-name>
+        <url-pattern>/private/*</url-pattern>
+        <url-pattern>/public/ChangePassword</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>AuthorizationFilter</filter-name>
+        <url-pattern>/private/admin/*</url-pattern>
+    </filter-mapping>
+    <listener>
+        <listener-class>password.pwm.HttpEventManager</listener-class>
+    </listener>
+    <servlet>
+        <servlet-name>LoginServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.LoginServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>LogoutServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.LogoutServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ChangePasswordServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ChangePasswordServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SetupResponsesServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.SetupResponsesServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ForgottenPasswordServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ForgottenPasswordServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CommandServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.CommandServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>NewUserServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.NewUserServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>GuestRegistrationServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.GuestRegistrationServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ActivateUserServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ActivateUserServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UpdateProfileServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.UpdateProfileServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ForgottenUsernameServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ForgottenUsernameServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ShortcutServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ShortcutServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>PeopleSearchServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.PeopleSearchServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CaptchaServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.CaptchaServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ConfigManagerServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ConfigManagerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ConfigGuideServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ConfigGuideServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>ResourceFileServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.ResourceFileServlet</servlet-class>
+        <init-param>
+            <description>zip files to treat as resource paths, seperated by semi-colons (;), must end in .zip</description>
+            <param-name>zipFileResources</param-name>
+            <param-value>/public/resources/dojo.zip;/public/resources/flags.zip</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>HelpdeskServlet</servlet-name>
+        <servlet-class>password.pwm.servlet.HelpdeskServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>LoginServlet</servlet-name>
+        <url-pattern>/private/Login</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>LogoutServlet</servlet-name>
+        <url-pattern>/private/Logout</url-pattern>
+        <url-pattern>/public/Logout</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ChangePasswordServlet</servlet-name>
+        <url-pattern>/private/ChangePassword</url-pattern>
+        <url-pattern>/public/ChangePassword</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SetupResponsesServlet</servlet-name>
+        <url-pattern>/private/SetupResponses</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ForgottenUsernameServlet</servlet-name>
+        <url-pattern>/public/ForgottenUsername</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ForgottenPasswordServlet</servlet-name>
+        <url-pattern>/public/ForgottenPassword</url-pattern>
+        <url-pattern>/public/ForgottenPassword/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CommandServlet</servlet-name>
+        <url-pattern>/public/CommandServlet</url-pattern>
+        <url-pattern>/private/CommandServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NewUserServlet</servlet-name>
+        <url-pattern>/public/NewUser</url-pattern>
+        <url-pattern>/public/NewUser/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GuestRegistrationServlet</servlet-name>
+        <url-pattern>/private/GuestRegistration</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ActivateUserServlet</servlet-name>
+        <url-pattern>/public/ActivateUser</url-pattern>
+        <url-pattern>/public/ActivateUser/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UpdateProfileServlet</servlet-name>
+        <url-pattern>/private/UpdateProfile</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ShortcutServlet</servlet-name>
+        <url-pattern>/private/Shortcuts</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PeopleSearchServlet</servlet-name>
+        <url-pattern>/private/PeopleSearch</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CaptchaServlet</servlet-name>
+        <url-pattern>/public/Captcha</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ConfigManagerServlet</servlet-name>
+        <url-pattern>/config/ConfigManager</url-pattern>
+        <url-pattern>/private/admin/ConfigManager</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ConfigGuideServlet</servlet-name>
+        <url-pattern>/config/ConfigGuide</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ResourceFileServlet</servlet-name>
+        <url-pattern>/public/resources/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>HelpdeskServlet</servlet-name>
+        <url-pattern>/private/Helpdesk</url-pattern>
+    </servlet-mapping>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/WEB-INF/jsp/error-http.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/WEB-INF/jsp/error-http.jsp</location>
+    </error-page>
+    <session-config>
+        <!-- Please use the PWM Configuration to control the idle session timeout.
+        This value will be overridden by PWM.  -->
+        <session-timeout>5</session-timeout>
+    </session-config>
+    <jsp-config>
+        <taglib>
+            <taglib-uri>pwm</taglib-uri>
+            <taglib-location>/WEB-INF/pwm-taglib.tld</taglib-location>
+        </taglib>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <trim-directive-whitespaces>true</trim-directive-whitespaces>
+        </jsp-property-group>
+    </jsp-config>
+
+<!--
+Automatically created by Apache Tomcat JspC.
+-->
+
+    <servlet>
+        <servlet-name>jsp.config.index_jsp</servlet-name>
+        <servlet-class>jsp.config.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.public_.license_jsp</servlet-name>
+        <servlet-class>jsp.public_.license_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.public_.localeselect_jsp</servlet-name>
+        <servlet-class>jsp.public_.localeselect_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.public_.rest_jsp</servlet-name>
+        <servlet-class>jsp.public_.rest_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.public_.health_jsp</servlet-name>
+        <servlet-class>jsp.public_.health_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.public_.randomgen_jsp</servlet-name>
+        <servlet-class>jsp.public_.randomgen_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.userinfo_jsp</servlet-name>
+        <servlet-class>jsp.private_.userinfo_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.history_jsp</servlet-name>
+        <servlet-class>jsp.private_.history_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.passwordwarn_jsp</servlet-name>
+        <servlet-class>jsp.private_.passwordwarn_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.activesessions_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.activesessions_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.statistics_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.statistics_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.status_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.status_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.userreport_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.userreport_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.activity_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.activity_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.intruders_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.intruders_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.auditlog_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.auditlog_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.eventlog_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.eventlog_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.index_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.health_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.health_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.admin_002dnav_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.admin_002dnav_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.admin.config_jsp</servlet-name>
+        <servlet-class>jsp.private_.admin.config_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.index_jsp</servlet-name>
+        <servlet-class>jsp.private_.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.private_.debug_jsp</servlet-name>
+        <servlet-class>jsp.private_.debug_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.index_jsp</servlet-name>
+        <servlet-class>jsp.index_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.updateprofile_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dend_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dend_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dwait_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.newuser_002dwait_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dmode_002drunning_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dmode_002drunning_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.error_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.error_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dupdate_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.guest_002dupdate_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dmethod_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenpassword_002dmethod_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldapcert_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dldapcert_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dldap_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dtemplate_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dtemplate_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.captcha_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.captcha_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.success_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.success_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dlocaleBundle_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dlocaleBundle_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dsearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenpassword_002dsearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_002dagreement_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.updateprofile_002dagreement_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.redirect_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.redirect_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.newuser_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_002dhelpdesk_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.setupresponses_002dhelpdesk_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dresponses_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenpassword_002dresponses_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dpassword_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dpassword_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_002dentercode_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.activateuser_002dentercode_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dsearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.guest_002dsearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002dlogin_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configmanager_002dlogin_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap2_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dldap2_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap3_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dldap3_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dcreate_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.guest_002dcreate_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.peoplesearch_002ddetail_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.peoplesearch_002ddetail_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dagreement_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.newuser_002dagreement_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_002dconfirm_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.setupresponses_002dconfirm_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpdesk_002ddetail_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.helpdesk_002ddetail_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dwait_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.changepassword_002dwait_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configmanager_002deditor_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.login_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.header_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.header_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.setting_002dcertificate_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.setting_002dcertificate_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.footer_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.footer_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.form_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.form_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.setupresponses_002dform_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.setupresponses_002dform_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.message_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.message_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.header_002dbody_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.fragment.header_002dbody_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_002dconfirm_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.updateprofile_002dconfirm_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_002dagreement_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.activateuser_002dagreement_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.peoplesearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.peoplesearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.setupresponses_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dentercode_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.newuser_002dentercode_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dstart_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configguide_002dstart_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dform_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.changepassword_002dform_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dentercode_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenpassword_002dentercode_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenusername_002dsearch_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenusername_002dsearch_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_002dpasswordonly_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.login_002dpasswordonly_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.logview_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.logview_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpdesk_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.helpdesk_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dchoice_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.forgottenpassword_002dchoice_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.activateuser_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.error_002dhttp_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.error_002dhttp_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.logout_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.logout_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dagreement_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.changepassword_002dagreement_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.shortcut_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.shortcut_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.changepassword_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dsettings_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dsettings_jsp</servlet-class>
+    </servlet>
+
+    <servlet>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002dmode_002dconfiguration_jsp</servlet-name>
+        <servlet-class>jsp.WEB_002dINF.jsp.configmanager_002dmode_002dconfiguration_jsp</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>jsp.config.index_jsp</servlet-name>
+        <url-pattern>/config/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.public_.license_jsp</servlet-name>
+        <url-pattern>/public/license.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.public_.localeselect_jsp</servlet-name>
+        <url-pattern>/public/localeselect.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.public_.rest_jsp</servlet-name>
+        <url-pattern>/public/rest.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.public_.health_jsp</servlet-name>
+        <url-pattern>/public/health.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.public_.randomgen_jsp</servlet-name>
+        <url-pattern>/public/randomgen.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.userinfo_jsp</servlet-name>
+        <url-pattern>/private/userinfo.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.history_jsp</servlet-name>
+        <url-pattern>/private/history.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.passwordwarn_jsp</servlet-name>
+        <url-pattern>/private/passwordwarn.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.activesessions_jsp</servlet-name>
+        <url-pattern>/private/admin/activesessions.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.statistics_jsp</servlet-name>
+        <url-pattern>/private/admin/statistics.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.status_jsp</servlet-name>
+        <url-pattern>/private/admin/status.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.userreport_jsp</servlet-name>
+        <url-pattern>/private/admin/userreport.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.activity_jsp</servlet-name>
+        <url-pattern>/private/admin/activity.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.intruders_jsp</servlet-name>
+        <url-pattern>/private/admin/intruders.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.auditlog_jsp</servlet-name>
+        <url-pattern>/private/admin/auditlog.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.eventlog_jsp</servlet-name>
+        <url-pattern>/private/admin/eventlog.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.index_jsp</servlet-name>
+        <url-pattern>/private/admin/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.health_jsp</servlet-name>
+        <url-pattern>/private/admin/health.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.admin_002dnav_jsp</servlet-name>
+        <url-pattern>/private/admin/admin-nav.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.admin.config_jsp</servlet-name>
+        <url-pattern>/private/admin/config.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.index_jsp</servlet-name>
+        <url-pattern>/private/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.private_.debug_jsp</servlet-name>
+        <url-pattern>/private/debug.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.index_jsp</servlet-name>
+        <url-pattern>/index.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/updateprofile.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dend_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-end.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dwait_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/newuser-wait.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dmode_002drunning_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-mode-running.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.error_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/error.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dupdate_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/guest-update.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dmethod_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenpassword-method.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldapcert_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-ldapcert.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-ldap.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dtemplate_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-template.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.captcha_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/captcha.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.success_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/success.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dlocaleBundle_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configmanager-editor-localeBundle.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dsearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenpassword-search.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_002dagreement_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/updateprofile-agreement.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.redirect_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/redirect.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/newuser.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_002dhelpdesk_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/setupresponses-helpdesk.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dresponses_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenpassword-responses.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dpassword_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-password.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_002dentercode_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/activateuser-entercode.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dsearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/guest-search.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002dlogin_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configmanager-login.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap2_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-ldap2.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dldap3_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-ldap3.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.guest_002dcreate_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/guest-create.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.peoplesearch_002ddetail_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/peoplesearch-detail.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dagreement_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/newuser-agreement.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_002dconfirm_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/setupresponses-confirm.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpdesk_002ddetail_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/helpdesk-detail.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dwait_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/changepassword-wait.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configmanager-editor.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/login.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.header_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/header.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.setting_002dcertificate_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/setting-certificate.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.footer_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/footer.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.form_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/form.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.setupresponses_002dform_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/setupresponses-form.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.message_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/message.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.fragment.header_002dbody_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/fragment/header-body.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.updateprofile_002dconfirm_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/updateprofile-confirm.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_002dagreement_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/activateuser-agreement.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.peoplesearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/peoplesearch.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.setupresponses_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/setupresponses.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.newuser_002dentercode_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/newuser-entercode.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configguide_002dstart_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configguide-start.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dform_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/changepassword-form.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dentercode_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenpassword-entercode.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenusername_002dsearch_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenusername-search.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.login_002dpasswordonly_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/login-passwordonly.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.logview_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/logview.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.helpdesk_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/helpdesk.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.forgottenpassword_002dchoice_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/forgottenpassword-choice.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.activateuser_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/activateuser.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.error_002dhttp_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/error-http.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.logout_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/logout.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_002dagreement_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/changepassword-agreement.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.shortcut_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/shortcut.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.changepassword_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/changepassword.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002deditor_002dsettings_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configmanager-editor-settings.jsp</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>jsp.WEB_002dINF.jsp.configmanager_002dmode_002dconfiguration_jsp</servlet-name>
+        <url-pattern>/WEB-INF/jsp/configmanager-mode-configuration.jsp</url-pattern>
+    </servlet-mapping>
+
+<!--
+End of content automatically created by Apache Tomcat JspC.
+-->
+</web-app>

@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="pwm:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>pwm</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="pwm-1.7.0.war">
+      <element id="artifact" artifact-name="pwm:war exploded" />
+    </root>
+  </artifact>
+</component>
